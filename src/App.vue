@@ -1,15 +1,17 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <web-brokus/>
+  <hr>
+  Powered by <a href="https://v3.vuejs.org/">Vue.js</a>
 </template>
 
 <script>
-import HelloWorld from './components/WebBrokus.vue'
+import WebBrokus from './components/WebBrokus.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    WebBrokus
   }
 }
 </script>
