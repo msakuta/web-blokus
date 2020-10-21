@@ -13,13 +13,13 @@
 import { ref } from 'vue';
 const boardSize = 20;
 const shapes = [
-  [[0,0]], // Monimo
+  [[0,0]], // Monomino
   [[0,0], [0,1]], // Dominoes
   [[0,0], [1,0]],
-  [[0,0], [0,1], [0,2]], // Trinos
+  [[0,0], [0,1], [0,2]], // Trominos
   [[0,0], [0,1], [1,0]],
   [[0,0], [0,1], [1,1]],
-  [[0,0], [0,1], [0,2], [0,3]], // Tetrinos
+  [[0,0], [0,1], [0,2], [0,3]], // Tetrominos
   [[0,0], [0,1], [0,2], [1,2]],
   [[0,0], [0,1], [0,2], [1,1]],
   [[0,0], [0,1], [1,1], [1,2]],
@@ -55,7 +55,8 @@ export default {
 
     function cellStyle(v, i) {
       return `position: absolute; left: ${
-          i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${            v ? "#ff7f7f" : "white"}`;
+          i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
+          v ? "#ff7f7f" : "white"}`;
     }
 
     return {
