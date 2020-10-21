@@ -31,6 +31,10 @@ const shapes = [
   [[0,0], [1,0], [0,1], [1,1], [2,1]],
 ];
 
+const Empty = 0;
+const Occupied = 1;
+const Candidate = 2;
+
 export default {
   name: 'WebBrokus',
 
@@ -52,7 +56,7 @@ export default {
     function updateBoard() {
       for(let y = 0; y < boardSize; y++){
         for(let x = 0; x < boardSize; x++){
-          board[x + y * boardSize] = 0;
+          board[x + y * boardSize] = Empty;
         }
       }
 
@@ -60,7 +64,13 @@ export default {
         for(const [xi, yi] of block.shape){
           if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
             continue;
-          board[xi + yi * boardSize] = 1;
+          board[xi + yi * boardSize] = Occupied;
+        }
+      }
+      for(let y = 0; y < boardSize; y++){
+        for(let x = 0; x < boardSize; x++){
+          if(isPlaceable([x, y]))
+            board[x + y * boardSize] = Candidate;
         }
       }
     }
@@ -73,10 +83,37 @@ export default {
       return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
     }
 
+    function isPlaceable(pos){
+      const allow = [1, 0, 1,
+        0, 0, 0,
+        1, 0, 1];
+      const deny = [0, 1, 0,
+        1, 1, 1,
+        0, 1, 0];
+      if(pos[0] === 0 || pos[0] === boardSize - 1){
+        return pos[1] === 0 || pos[1] === boardSize - 1;
+      }
+      else if(pos[1] === 0 || pos[1] === boardSize - 1){
+        return false;
+      }
+      let allowed = 0;
+      for(let dx = -1; dx <= 1; dx++){
+        for(let dy = -1; dy <= 1; dy++){
+          if(board[pos[0] + dx + (pos[1] + dy) * boardSize] === Occupied){
+            if(deny[dx + 1 + (dy + 1) * 3])
+              return false;
+            if(allow[dx + 1 + (dy + 1) * 3])
+              allowed++;
+          }
+        }
+      }
+      return !!allowed;
+    }
+
     function cellStyle(v, i) {
       return `position: absolute; left: ${
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
-          v ? "#ff7f7f" : "white"}`;
+          v === 1 ? "#ff7f7f" : v === 2 ? "#7f7fff" : "white"}`;
     }
 
     onMounted(() => {
