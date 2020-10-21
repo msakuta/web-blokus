@@ -10,16 +10,16 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import {  onMounted, reactive } from 'vue';
 const boardSize = 20;
 const shapes = [
   [[0,0]], // Monomino
   [[0,0], [0,1]], // Dominoes
   [[0,0], [1,0]],
-  [[0,0], [0,1], [0,2]], // Trominos
+  [[0,0], [0,1], [0,2]], // Trominoes
   [[0,0], [0,1], [1,0]],
   [[0,0], [0,1], [1,1]],
-  [[0,0], [0,1], [0,2], [0,3]], // Tetrominos
+  [[0,0], [0,1], [0,2], [0,3]], // Tetrominoes
   [[0,0], [0,1], [0,2], [1,2]],
   [[0,0], [0,1], [0,2], [1,1]],
   [[0,0], [0,1], [1,1], [1,2]],
@@ -35,22 +35,42 @@ export default {
   name: 'WebBrokus',
 
   setup(){
-    let board = ref(new Array(boardSize * boardSize));
+    let board = reactive(new Array(boardSize * boardSize));
 
-    for(let y = 0; y < boardSize; y++){
-      for(let x = 0; x < boardSize; x++){
-        board.value[x + y * boardSize] = 0;
-        for(let idx = 0; idx < shapes.length; idx++){
-          const shape = shapes[idx];
-          for(let scell of shape){
-            const xi = (idx * 5) % boardSize;
-            const yi = Math.floor((idx * 5) / boardSize) * 5;
-            if(boardSize <= scell[0] + xi)
-              continue;
-            board.value[scell[0] + xi + (scell[1] + yi) * boardSize] = 1;
-          }
+    let blocks = reactive([]);
+
+    for(let idx = 0; idx < shapes.length; idx++){
+      const shape = shapes[idx];
+      const xi = (idx * 5) % boardSize;
+      const yi = Math.floor((idx * 5) / boardSize) * 5;
+      blocks.push({
+        origin: [xi, yi],
+        shape: shift(shape, [xi, yi])
+      });
+    }
+
+    function updateBoard() {
+      for(let y = 0; y < boardSize; y++){
+        for(let x = 0; x < boardSize; x++){
+          board[x + y * boardSize] = 0;
         }
       }
+
+      for(let block of blocks){
+        for(const [xi, yi] of block.shape){
+          if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
+            continue;
+          board[xi + yi * boardSize] = 1;
+        }
+      }
+    }
+
+    function rotate(block, center=[0,0]){
+      return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
+    }
+
+    function shift(block, offset){
+      return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
     }
 
     function cellStyle(v, i) {
@@ -58,6 +78,16 @@ export default {
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
           v ? "#ff7f7f" : "white"}`;
     }
+
+    onMounted(() => {
+      setInterval(() => {
+        blocks = blocks.map(block => ({
+          origin: block.origin,
+          shape: rotate(block.shape, block.origin)
+        }));
+        updateBoard();
+      }, 200);
+    })
 
     return {
       board,
