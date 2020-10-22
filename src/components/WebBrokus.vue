@@ -3,6 +3,7 @@
     Pieces:
   <BlockPreview v-for="(block, idx) in blockOptions" :key="idx" :block="block"
     :selected="selectedBlockOption === idx" @click="previewClicked(idx)"/>
+  <input type="button" @click="rotate" value="Rotate">
   </div>
   <div class="hello">
     <div class="outerFrame">
@@ -47,7 +48,7 @@ export default {
 
   setup(){
     let board = reactive(new Array(boardSize * boardSize));
-    let blockOptions = shapes.map(shape => ({origin: [0, 0], shape}));
+    let blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], shape})));
     let selectedBlockOption = ref(0);
     let blocks = reactive([]);
 
@@ -85,9 +86,14 @@ export default {
       }
     }
 
-    // function rotate(block, center=[0,0]){
-    //   return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
-    // }
+    function rotateBlock(block, center=[0,0]){
+      return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
+    }
+
+    function rotate(){
+      blockOptions[selectedBlockOption.value].shape = rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
+      blockOptions[selectedBlockOption.value] = blockOptions[selectedBlockOption.value];
+    }
 
     // function shift(block, offset){
     //   return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
@@ -165,7 +171,7 @@ export default {
 
       blocks.push({
         origin: [x, y],
-        shape: shapes[selectedBlockOption.value],
+        shape: blockOptions[selectedBlockOption.value].shape,
       });
       updateBoard();
     }
@@ -180,6 +186,7 @@ export default {
       blockOptions,
       selectedBlockOption,
       previewClicked: idx => selectedBlockOption.value = idx,
+      rotate,
     }
   },
 }

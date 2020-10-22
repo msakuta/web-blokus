@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { reactive, watchEffect } from 'vue';
 const boardSize = 5;
 
 const Empty = 0;
@@ -54,7 +54,7 @@ export default {
           v === 1 ? "#ff7f7f" : v === 2 ? "#7f7fff" : "white"}`;
     }
 
-    updateBoard();
+    watchEffect(updateBoard);
 
     return {
       board,
