@@ -138,8 +138,31 @@ export default {
 
     function tryPlace(i) {
       let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
-      if(!isPlaceable([x, y]))
+      if(!isPlaceable([x, y])){
+        console.log("Cannot place there because it will not touching another block with a corner");
         return;
+      }
+
+      // Check no block will touch new block
+      const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
+      let block = blockOptions[selectedBlockOption.value];
+      for(let [xi, yi] of block.shape){
+        xi += x;
+        yi += y;
+        if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
+          continue;
+        for(const neighbor of neighbors){
+          const xj = xi + neighbor[0];
+          const yj = yi + neighbor[1];
+          if(xj < 0 || boardSize <= xj || yj < 0 || boardSize <= yj)
+            continue;
+          if(board[xj + yj * boardSize] === Occupied){
+            console.log(`Cannot place there because it will be touching another block: ${xi},${yi} and ${xj},${yj}`);
+            return;
+          }
+        }
+      }
+
       blocks.push({
         origin: [x, y],
         shape: shapes[selectedBlockOption.value],
