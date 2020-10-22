@@ -1,8 +1,13 @@
 <template>
+  <div>
+    Pieces:
+  <BlockPreview v-for="(block, idx) in blockOptions" :key="idx" :block="block"
+    :selected="selectedBlockOption === idx" @click="previewClicked(idx)"/>
+  </div>
   <div class="hello">
     <div class="outerFrame">
       <div v-for="(v, i) in board" :key="i">
-        <div class="cell" :style="cellStyle(v, i)">
+        <div class="cell" :style="cellStyle(v, i)" @click="tryPlace(i)">
         </div>
       </div>
     </div>
@@ -10,7 +15,8 @@
 </template>
 
 <script>
-import {  onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
+import BlockPreview from './BlockPreview';
 const boardSize = 20;
 const shapes = [
   [[0,0]], // Monomino
@@ -37,21 +43,23 @@ const Candidate = 2;
 
 export default {
   name: 'WebBrokus',
+  components: { BlockPreview },
 
   setup(){
     let board = reactive(new Array(boardSize * boardSize));
-
+    let blockOptions = shapes.map(shape => ({origin: [0, 0], shape}));
+    let selectedBlockOption = ref(0);
     let blocks = reactive([]);
 
-    for(let idx = 0; idx < shapes.length; idx++){
-      const shape = shapes[idx];
-      const xi = (idx * 5) % boardSize;
-      const yi = Math.floor((idx * 5) / boardSize) * 5;
-      blocks.push({
-        origin: [xi, yi],
-        shape: shift(shape, [xi, yi])
-      });
-    }
+    // for(let idx = 0; idx < shapes.length; idx++){
+    //   const shape = shapes[idx];
+    //   const xi = (idx * 5) % boardSize;
+    //   const yi = Math.floor((idx * 5) / boardSize) * 5;
+    //   blocks.push({
+    //     origin: [xi, yi],
+    //     shape: shift(shape, [xi, yi])
+    //   });
+    // }
 
     function updateBoard() {
       for(let y = 0; y < boardSize; y++){
@@ -61,7 +69,9 @@ export default {
       }
 
       for(let block of blocks){
-        for(const [xi, yi] of block.shape){
+        for(let [xi, yi] of block.shape){
+          xi += block.origin[0];
+          yi += block.origin[1];
           if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
             continue;
           board[xi + yi * boardSize] = Occupied;
@@ -75,13 +85,13 @@ export default {
       }
     }
 
-    function rotate(block, center=[0,0]){
-      return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
-    }
+    // function rotate(block, center=[0,0]){
+    //   return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
+    // }
 
-    function shift(block, offset){
-      return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
-    }
+    // function shift(block, offset){
+    //   return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
+    // }
 
     function isPlaceable(pos){
       const allow = [1, 0, 1,
@@ -117,18 +127,36 @@ export default {
     }
 
     onMounted(() => {
-      setInterval(() => {
-        blocks = blocks.map(block => ({
-          origin: block.origin,
-          shape: rotate(block.shape, block.origin)
-        }));
-        updateBoard();
-      }, 200);
+    //   setInterval(() => {
+    //     blocks = blocks.map(block => ({
+    //       origin: block.origin,
+    //       shape: rotate(block.shape, block.origin)
+    //     }));
+    //     updateBoard();
+    //   }, 200);
     })
+
+    function tryPlace(i) {
+      let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
+      if(!isPlaceable([x, y]))
+        return;
+      blocks.push({
+        origin: [x, y],
+        shape: shapes[selectedBlockOption.value],
+      });
+      updateBoard();
+    }
+
+    updateBoard();
 
     return {
       board,
       cellStyle,
+      tryPlace,
+      blocks,
+      blockOptions,
+      selectedBlockOption,
+      previewClicked: idx => selectedBlockOption.value = idx,
     }
   },
 }
