@@ -48,7 +48,7 @@ export default {
 
   setup(){
     let board = reactive(new Array(boardSize * boardSize));
-    let blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], shape})));
+    let blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
     let selectedBlockOption = ref(0);
     let blocks = reactive([]);
 
@@ -70,7 +70,9 @@ export default {
       }
 
       for(let block of blocks){
+        // const rotatedShape = [...Array(block.rotation)].reduce((accum) => rotateBlock(accum, block.origin), block.shape);
         for(let [xi, yi] of block.shape){
+          [xi, yi] = rotateCell([xi, yi], block.rotation);
           xi += block.origin[0];
           yi += block.origin[1];
           if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
@@ -86,13 +88,24 @@ export default {
       }
     }
 
-    function rotateBlock(block, center=[0,0]){
-      return block.map(cell => [(cell[1] - center[1]) + center[0], -(cell[0] - center[0]) + center[1]]);
+    function rotateCell(cell, rotation) {
+      let [xi, yi] = cell;
+      switch(rotation){
+        case 0: break;
+        case 1: [xi, yi] = [yi, -xi]; break;
+        case 2: [xi, yi] = [-xi, -yi]; break;
+        case 3: [xi, yi] = [-yi, xi]; break;
+      }
+      return [xi, yi];
     }
 
+    // function rotateBlock(block, center=[0,0]){
+    //   return block.map(cell => [cell[1] + center[0], -cell[0] + center[1]]);
+    // }
+
     function rotate(){
-      blockOptions[selectedBlockOption.value].shape = rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
-      blockOptions[selectedBlockOption.value] = blockOptions[selectedBlockOption.value];
+      blockOptions[selectedBlockOption.value].rotation = (blockOptions[selectedBlockOption.value].rotation + 1) % 4;
+      // rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
     }
 
     // function shift(block, offset){
@@ -153,6 +166,7 @@ export default {
       const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
       let block = blockOptions[selectedBlockOption.value];
       for(let [xi, yi] of block.shape){
+        [xi, yi] = rotateCell([xi, yi], block.rotation);
         xi += x;
         yi += y;
         if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
@@ -172,6 +186,7 @@ export default {
       blocks.push({
         origin: [x, y],
         shape: blockOptions[selectedBlockOption.value].shape,
+        rotation: blockOptions[selectedBlockOption.value].rotation,
       });
       updateBoard();
     }

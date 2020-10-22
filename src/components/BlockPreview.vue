@@ -41,10 +41,16 @@ export default {
         }
       }
 
-      for(const [xi, yi] of props.block.shape){
-          if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
+      for(let [xi, yi] of props.block.shape){
+        switch(props.block.rotation){
+          case 0: break;
+          case 1: [xi, yi] = [yi, boardSize - xi - 1]; break;
+          case 2: [xi, yi] = [boardSize - xi - 1, boardSize - yi - 1]; break;
+          case 3: [xi, yi] = [boardSize - yi - 1, xi]; break;
+        }
+        if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
           continue;
-          board[xi + yi * boardSize] = Occupied;
+        board[xi + yi * boardSize] = Occupied;
       }
     }
 
