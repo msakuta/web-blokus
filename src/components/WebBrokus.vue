@@ -8,7 +8,7 @@
   <div class="hello">
     <div class="outerFrame">
       <div v-for="(v, i) in computedBoard" :key="i">
-        <div class="cell" :style="cellStyle(v, i)" @click="tryPlace(i)"
+        <div :class="{cell: true, ...cellClass(v, i)}" :style="cellStyle(v, i)" @click="tryPlace(i)"
           @mouseenter="previewPiece(i)">
         </div>
       </div>
@@ -169,6 +169,10 @@ export default {
           v === Occupied ? "#ff7f7f" : v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
     }
 
+    function cellClass(v) {
+      return {ridge: v === Occupied};
+    }
+
     onMounted(() => {
     //   setInterval(() => {
     //     blocks = blocks.map(block => ({
@@ -234,6 +238,7 @@ export default {
       board,
       computedBoard,
       cellStyle,
+      cellClass,
       tryPlace,
       blocks,
       blockOptions,
@@ -276,5 +281,11 @@ a {
   border: solid 1px black;
   width: 32px;
   height: 32px;
+}
+.ridge {
+  border: ridge 4px;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
 }
 </style>
