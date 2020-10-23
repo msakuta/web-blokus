@@ -1,9 +1,14 @@
 <template>
   <div>
+    <input type="button" @click="resetGame" value="Reset Game">
+  </div>
+  <div>
     Pieces:
   <BlockPreview v-for="(block, idx) in blockOptions" :key="idx" :block="block"
     :selected="selectedBlockOption === idx" @click="previewClicked(idx)"/>
-  <input type="button" @click="rotate" value="Rotate">
+  </div>
+  <div>
+    <input type="button" @click="rotate" value="Rotate">
   </div>
   <div class="hello">
     <div class="outerFrame">
@@ -64,6 +69,14 @@ export default {
     //     shape: shift(shape, [xi, yi])
     //   });
     // }
+
+    function resetGame() {
+      blocks.length = 0;
+      blockOptions.length = 0 ;
+      shapes.forEach(shape => blockOptions.push({origin: [0, 0], rotation: 0, shape}));
+      selectedBlockOption.value = 0;
+      updateBoard();
+    }
 
     function updateBoard() {
       for(let y = 0; y < boardSize; y++){
@@ -250,6 +263,7 @@ export default {
     return {
       board,
       computedBoard,
+      resetGame,
       cellStyle,
       cellClass,
       tryPlace,
