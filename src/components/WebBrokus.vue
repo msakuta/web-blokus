@@ -181,18 +181,20 @@ export default {
 
     function tryPlace(i) {
       let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
-      if(!isPlaceable([x, y])){
-        console.log("Cannot place there because it will not touching another block with a corner");
-        return;
-      }
 
       // Check no block will touch new block
       const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
       let block = blockOptions[selectedBlockOption.value];
+      let anyPlaceable = false;
       for(let [xi, yi] of block.shape){
         [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), [x, y]);
-        if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
-          continue;
+
+        // If any of the cell consisting of the block is outside the board, it cannot be placed.
+        if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi){
+          return false;
+        }
+        if(isPlaceable([xi, yi]))
+          anyPlaceable = true;
         for(const neighbor of neighbors){
           const xj = xi + neighbor[0];
           const yj = yi + neighbor[1];
@@ -200,9 +202,14 @@ export default {
             continue;
           if(board[xj + yj * boardSize] === Occupied){
             console.log(`Cannot place there because it will be touching another block: ${xi},${yi} and ${xj},${yj}`);
-            return;
+            return false;
           }
         }
+      }
+
+      if(!anyPlaceable){
+        console.log("Cannot place there because it will not be touching another block with a corner");
+        return false;
       }
 
       blocks.push({
@@ -211,6 +218,7 @@ export default {
         rotation: blockOptions[selectedBlockOption.value].rotation,
       });
       updateBoard();
+      return true;
     }
 
     function previewPiece(i){
