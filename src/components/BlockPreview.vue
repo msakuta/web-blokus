@@ -19,6 +19,7 @@ export default {
   props: {
     block: Object,
     selected: Boolean,
+    color: String,
   },
 
   setup(props){
@@ -56,8 +57,8 @@ export default {
 
     function cellStyle(v, i) {
       return `position: absolute; left: ${
-          i % boardSize * 8}px; top: ${Math.floor(i / boardSize) * 8}px; background-color:${
-          v === 1 ? "#ff7f7f" : v === 2 ? "#7f7fff" : "white"}`;
+          i % boardSize * 6}px; top: ${Math.floor(i / boardSize) * 6}px; background-color:${
+          v === 1 ? props.color : v === 2 ? "#7f7fff" : "white"}`;
     }
 
     watchEffect(updateBoard);
@@ -91,8 +92,8 @@ a {
   position: relative;
   display: inline-block;
   right: 0px;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border: solid 1px red;
   padding: 1px;
   margin: 4px;
@@ -102,8 +103,8 @@ a {
   border: solid 2px blue;
 }
 .cell {
-  border: solid 1px black;
-  width: 8px;
-  height: 8px;
+  border: solid 1px #7f7f7f;
+  width: 6px;
+  height: 6px;
 }
 </style>

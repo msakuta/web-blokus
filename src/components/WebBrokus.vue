@@ -2,10 +2,11 @@
   <div>
     <input type="button" @click="resetGame" value="Reset Game">
   </div>
-  <div>
-    Pieces:
-  <BlockPreview v-for="(block, idx) in blockOptions" :key="idx" :block="block"
-    :selected="selectedBlockOption === idx" @click="previewClicked(idx)"/>
+  <div v-for="(player, playerIdx) in players" :key="playerIdx" :class="{playerFrame: true, inactive: playerIdx !== activePlayerIdx}">
+    Player {{playerIdx+1}} Pieces:
+    <BlockPreview v-for="(block, idx) in player.blockOptions" :key="idx" :block="block"
+      :selected="player.selectedBlockOption === idx" :color="player.color"
+      @click="previewClicked(player, idx)"/>
   </div>
   <div>
     <input type="button" @click="rotate" value="Rotate">
@@ -45,9 +46,19 @@ const shapes = [
 ];
 
 const Empty = 0;
-const Occupied = 1;
-const Candidate = 2;
-const Preview = 3;
+const Occupied0 = 1;
+const Occupied3 = 4;
+const Candidate = 5;
+const Preview = 6;
+
+class Player{
+  blocks = [];
+  blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
+  selectedBlockOption = ref(0);
+  constructor(color){
+    this.color = color;
+  }
+}
 
 export default {
   name: 'WebBrokus',
@@ -55,9 +66,8 @@ export default {
 
   setup(){
     let board = reactive(new Array(boardSize * boardSize));
-    let blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
-    let selectedBlockOption = ref(0);
-    let blocks = reactive([]);
+    let players = reactive(["#ff7f7f", "#ffff00", "#00ff00", "#7f7fff"].map(color => new Player(color)));
+    let activePlayerIdx = ref(0);
     let preview = ref(null);
 
     // for(let idx = 0; idx < shapes.length; idx++){
@@ -71,10 +81,12 @@ export default {
     // }
 
     function resetGame() {
-      blocks.length = 0;
-      blockOptions.length = 0 ;
-      shapes.forEach(shape => blockOptions.push({origin: [0, 0], rotation: 0, shape}));
-      selectedBlockOption.value = 0;
+      for(let player of players){
+        player.blocks.length = 0;
+        player.blockOptions.length = 0;
+        shapes.forEach(shape => player.blockOptions.push({origin: [0, 0], rotation: 0, shape}));
+        player.selectedBlockOption = 0;
+      }
       updateBoard();
     }
 
@@ -85,23 +97,22 @@ export default {
         }
       }
 
-      for(let block of blocks){
-        // const rotatedShape = [...Array(block.rotation)].reduce((accum) => rotateBlock(accum, block.origin), block.shape);
-        for(let [xi, yi] of block.shape){
-          [xi, yi] = rotateCell([xi, yi], block.rotation);
-          xi += block.origin[0];
-          yi += block.origin[1];
-          if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
-            continue;
-          board[xi + yi * boardSize] = Occupied;
+      players.forEach((player, playerIdx) => {
+        for(let block of player.blocks){
+          for(let [xi, yi] of block.shape){
+            [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), block.origin);
+            if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
+              continue;
+            board[xi + yi * boardSize] = Occupied0 + playerIdx;
+          }
         }
-      }
-      for(let y = 0; y < boardSize; y++){
-        for(let x = 0; x < boardSize; x++){
-          if(board[x + y * boardSize] === Empty && isPlaceable([x, y]))
-            board[x + y * boardSize] = Candidate;
+        for(let y = 0; y < boardSize; y++){
+          for(let x = 0; x < boardSize; x++){
+            if(board[x + y * boardSize] === Empty && isPlaceable([x, y]))
+              board[x + y * boardSize] = Candidate;
+          }
         }
-      }
+      });
     }
 
     function rotateCell(cell, rotation) {
@@ -139,12 +150,13 @@ export default {
     // }
 
     function rotate(){
-      if(0 <= selectedBlockOption.value){
-        blockOptions[selectedBlockOption.value].rotation = (blockOptions[selectedBlockOption.value].rotation + 1) % 4;
+      const player = players[activePlayerIdx.value];
+      if(0 <= player.selectedBlockOption){
+        player.blockOptions[player.selectedBlockOption].rotation = (player.blockOptions[player.selectedBlockOption].rotation + 1) % 4;
         if(preview.value)
-          preview.value.rotation = blockOptions[selectedBlockOption.value].rotation;
+          preview.value.rotation = player.blockOptions[player.selectedBlockOption].rotation;
       }
-      // rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
+      // rotateBlock(blockOptions[player.selectedBlockOption].shape, [2,2]);
     }
 
     // function shift(block, offset){
@@ -158,19 +170,28 @@ export default {
       const deny = [0, 1, 0,
         1, 1, 1,
         0, 1, 0];
-      if(pos[0] === 0 || pos[0] === boardSize - 1){
-        return pos[1] === 0 || pos[1] === boardSize - 1;
-      }
-      else if(pos[1] === 0 || pos[1] === boardSize - 1){
-        return false;
-      }
       let allowed = 0;
-      for(let dx = -1; dx <= 1; dx++){
-        for(let dy = -1; dy <= 1; dy++){
-          if(board[pos[0] + dx + (pos[1] + dy) * boardSize] === Occupied){
+      if(activePlayerIdx.value === 0 && pos[0] === 0 && pos[1] === 0 ||
+         activePlayerIdx.value === 1 && pos[0] === 0 && pos[1] === boardSize - 1 ||
+         activePlayerIdx.value === 2 && pos[0] === boardSize - 1 && pos[1] === boardSize - 1 ||
+         activePlayerIdx.value === 3 && pos[0] === boardSize - 1 && pos[1] === 0)
+      {
+        allowed++;
+      }
+
+      for(let dy = -1; dy <= 1; dy++){
+        const yj = pos[1] + dy;
+        if(yj < 0 || boardSize <= yj)
+          continue;
+        for(let dx = -1; dx <= 1; dx++){
+          const xj = pos[0] + dx;
+          if(xj < 0 || boardSize <= xj)
+            continue;
+          const cell = board[xj + yj * boardSize];
+          if(Occupied0 <= cell && cell <= Occupied3){
             if(deny[dx + 1 + (dy + 1) * 3])
               return false;
-            if(allow[dx + 1 + (dy + 1) * 3])
+            if(allow[dx + 1 + (dy + 1) * 3] && cell - Occupied0 === activePlayerIdx.value)
               allowed++;
           }
         }
@@ -181,11 +202,12 @@ export default {
     function cellStyle(v, i) {
       return `position: absolute; left: ${
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
-          v === Occupied ? "#ff7f7f" : v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
+          Occupied0 <= v && v <= Occupied3 ? players[v - Occupied0].color :
+          v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
     }
 
     function cellClass(v) {
-      return {ridge: v === Occupied};
+      return {ridge: Occupied0 <= v && v <= Occupied3};
     }
 
     onMounted(() => {
@@ -199,7 +221,8 @@ export default {
     })
 
     function tryPlace(i) {
-      if(selectedBlockOption.value < 0){
+      const player = players[activePlayerIdx.value];
+      if(player.selectedBlockOption < 0){
         console.log("Block is not selected!");
         return false;
       }
@@ -207,7 +230,7 @@ export default {
 
       // Check no block will touch new block
       const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
-      let block = blockOptions[selectedBlockOption.value];
+      let block = player.blockOptions[player.selectedBlockOption];
       let anyPlaceable = false;
       for(let [xi, yi] of block.shape){
         [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), [x, y]);
@@ -223,7 +246,8 @@ export default {
           const yj = yi + neighbor[1];
           if(xj < 0 || boardSize <= xj || yj < 0 || boardSize <= yj)
             continue;
-          if(board[xj + yj * boardSize] === Occupied){
+          const cell = board[xj + yj * boardSize];
+          if(Occupied0 <= cell && cell <= Occupied3){
             console.log(`Cannot place there because it will be touching another block: ${xi},${yi} and ${xj},${yj}`);
             return false;
           }
@@ -235,25 +259,27 @@ export default {
         return false;
       }
 
-      blocks.push({
+      player.blocks.push({
         origin: [x, y],
-        shape: blockOptions[selectedBlockOption.value].shape,
-        rotation: blockOptions[selectedBlockOption.value].rotation,
+        shape: player.blockOptions[player.selectedBlockOption].shape,
+        rotation: player.blockOptions[player.selectedBlockOption].rotation,
       });
-      blockOptions.splice(selectedBlockOption.value, 1);
-      if(blockOptions.length <= selectedBlockOption.value)
-        selectedBlockOption.value = blockOptions.length - 1;
+      player.blockOptions.splice(player.selectedBlockOption, 1);
+      if(player.blockOptions.length <= player.selectedBlockOption)
+        player.selectedBlockOption = player.blockOptions.length - 1;
+      activePlayerIdx.value = (activePlayerIdx.value + 1) % 4;
       updateBoard();
       return true;
     }
 
     function previewPiece(i){
-      if(selectedBlockOption.value < 0)
+      const player = players[activePlayerIdx.value];
+      if(player.selectedBlockOption < 0)
         preview.value = null;
       else{
         let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
-        preview.value = {origin: [x, y], shape: blockOptions[selectedBlockOption.value].shape,
-          rotation: blockOptions[selectedBlockOption.value].rotation,
+        preview.value = {origin: [x, y], shape: player.blockOptions[player.selectedBlockOption].shape,
+          rotation: player.blockOptions[player.selectedBlockOption].rotation,
         };
       }
     }
@@ -267,10 +293,10 @@ export default {
       cellStyle,
       cellClass,
       tryPlace,
-      blocks,
-      blockOptions,
-      selectedBlockOption,
-      previewClicked: idx => selectedBlockOption.value = idx,
+      previewClicked: (player, idx) => player.selectedBlockOption = idx,
+      players,
+      activePlayerIdx,
+      activePlayer: computed(() => players[activePlayerIdx.value]),
       rotate,
       previewPiece,
     }
@@ -303,6 +329,12 @@ a {
   height: 640px;
   border: solid 1px red;
   background-color: white;
+}
+.playerFrame {
+  border: 1px solid black;
+}
+.inactive {
+  background-color: #afafaf;
 }
 .cell {
   border: solid 1px black;
