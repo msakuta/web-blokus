@@ -126,9 +126,11 @@ export default {
     // }
 
     function rotate(){
-      blockOptions[selectedBlockOption.value].rotation = (blockOptions[selectedBlockOption.value].rotation + 1) % 4;
-      if(preview.value)
-        preview.value.rotation = blockOptions[selectedBlockOption.value].rotation;
+      if(0 <= selectedBlockOption.value){
+        blockOptions[selectedBlockOption.value].rotation = (blockOptions[selectedBlockOption.value].rotation + 1) % 4;
+        if(preview.value)
+          preview.value.rotation = blockOptions[selectedBlockOption.value].rotation;
+      }
       // rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
     }
 
@@ -184,6 +186,10 @@ export default {
     })
 
     function tryPlace(i) {
+      if(selectedBlockOption.value < 0){
+        console.log("Block is not selected!");
+        return false;
+      }
       let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
 
       // Check no block will touch new block
@@ -221,15 +227,22 @@ export default {
         shape: blockOptions[selectedBlockOption.value].shape,
         rotation: blockOptions[selectedBlockOption.value].rotation,
       });
+      blockOptions.splice(selectedBlockOption.value, 1);
+      if(blockOptions.length <= selectedBlockOption.value)
+        selectedBlockOption.value = blockOptions.length - 1;
       updateBoard();
       return true;
     }
 
     function previewPiece(i){
-      let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
-      preview.value = {origin: [x, y], shape: blockOptions[selectedBlockOption.value].shape,
-        rotation: blockOptions[selectedBlockOption.value].rotation,
-      };
+      if(selectedBlockOption.value < 0)
+        preview.value = null;
+      else{
+        let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
+        preview.value = {origin: [x, y], shape: blockOptions[selectedBlockOption.value].shape,
+          rotation: blockOptions[selectedBlockOption.value].rotation,
+        };
+      }
     }
 
     updateBoard();
