@@ -7,8 +7,9 @@
   </div>
   <div class="hello">
     <div class="outerFrame">
-      <div v-for="(v, i) in board" :key="i">
-        <div class="cell" :style="cellStyle(v, i)" @click="tryPlace(i)">
+      <div v-for="(v, i) in computedBoard" :key="i">
+        <div class="cell" :style="cellStyle(v, i)" @click="tryPlace(i)"
+          @mouseenter="previewPiece(i)">
         </div>
       </div>
     </div>
@@ -16,7 +17,7 @@
 </template>
 
 <script>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import BlockPreview from './BlockPreview';
 const boardSize = 20;
 const shapes = [
@@ -41,6 +42,7 @@ const shapes = [
 const Empty = 0;
 const Occupied = 1;
 const Candidate = 2;
+const Preview = 3;
 
 export default {
   name: 'WebBrokus',
@@ -51,6 +53,7 @@ export default {
     let blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
     let selectedBlockOption = ref(0);
     let blocks = reactive([]);
+    let preview = ref(null);
 
     // for(let idx = 0; idx < shapes.length; idx++){
     //   const shape = shapes[idx];
@@ -82,7 +85,7 @@ export default {
       }
       for(let y = 0; y < boardSize; y++){
         for(let x = 0; x < boardSize; x++){
-          if(isPlaceable([x, y]))
+          if(board[x + y * boardSize] === Empty && isPlaceable([x, y]))
             board[x + y * boardSize] = Candidate;
         }
       }
@@ -99,12 +102,33 @@ export default {
       return [xi, yi];
     }
 
+    function shiftCell(cell, offset){
+      let [xi, yi] = cell;
+      xi += offset[0];
+      yi += offset[1];
+      return [xi, yi];
+    }
+
+    let computedBoard = computed(() => {
+      let ret = [...board];
+      if(preview.value){
+        for(const cell of preview.value.shape){
+          const pos = shiftCell(rotateCell(cell, preview.value.rotation), preview.value.origin);
+          if(ret[pos[0] + pos[1] * boardSize] === Empty)
+            ret[pos[0] + pos[1] * boardSize] = Preview;
+        }
+      }
+      return ret;
+    });
+
     // function rotateBlock(block, center=[0,0]){
     //   return block.map(cell => [cell[1] + center[0], -cell[0] + center[1]]);
     // }
 
     function rotate(){
       blockOptions[selectedBlockOption.value].rotation = (blockOptions[selectedBlockOption.value].rotation + 1) % 4;
+      if(preview.value)
+        preview.value.rotation = blockOptions[selectedBlockOption.value].rotation;
       // rotateBlock(blockOptions[selectedBlockOption.value].shape, [2,2]);
     }
 
@@ -142,7 +166,7 @@ export default {
     function cellStyle(v, i) {
       return `position: absolute; left: ${
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
-          v === 1 ? "#ff7f7f" : v === 2 ? "#7f7fff" : "white"}`;
+          v === Occupied ? "#ff7f7f" : v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
     }
 
     onMounted(() => {
@@ -166,9 +190,7 @@ export default {
       const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
       let block = blockOptions[selectedBlockOption.value];
       for(let [xi, yi] of block.shape){
-        [xi, yi] = rotateCell([xi, yi], block.rotation);
-        xi += x;
-        yi += y;
+        [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), [x, y]);
         if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
           continue;
         for(const neighbor of neighbors){
@@ -191,10 +213,18 @@ export default {
       updateBoard();
     }
 
+    function previewPiece(i){
+      let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
+      preview.value = {origin: [x, y], shape: blockOptions[selectedBlockOption.value].shape,
+        rotation: blockOptions[selectedBlockOption.value].rotation,
+      };
+    }
+
     updateBoard();
 
     return {
       board,
+      computedBoard,
       cellStyle,
       tryPlace,
       blocks,
@@ -202,6 +232,7 @@ export default {
       selectedBlockOption,
       previewClicked: idx => selectedBlockOption.value = idx,
       rotate,
+      previewPiece,
     }
   },
 }
