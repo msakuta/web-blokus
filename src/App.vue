@@ -1,9 +1,10 @@
 <template>
   <div class="appContainer">
-    <img alt="Vue logo" src="./assets/logo.png">
+    <h1>Web-blokus</h1>
     <web-brokus/>
     <hr>
-    Powered by <a href="https://v3.vuejs.org/">Vue.js</a>
+    Powered by <a href="https://v3.vuejs.org/">Vue.js</a><br>
+    Source on <a href="https://github.com/msakuta/web-blokus">GitHub</a>.
   </div>
 </template>
 
