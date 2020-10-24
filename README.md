@@ -1,5 +1,14 @@
 # web-brokus
 
+Try it now on your browser! https://msakuta.github.io/web-blokus/
+
+## What is this?
+
+Blokus is a board game that can be playerd with 2-4 people.
+I wanted to implement the game and see if I can implement decent AI player.
+
+
+
 ## Project setup
 ```
 npm install
