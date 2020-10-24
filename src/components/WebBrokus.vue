@@ -46,10 +46,21 @@ const shapes = [
 ];
 
 const Empty = 0;
-const Occupied0 = 1;
-const Occupied3 = 4;
-const Candidate = 5;
-const Preview = 6;
+const Occupied = 4;
+const OccupiedMask = 0x3;
+const Candidate = 8;
+const Preview = 16;
+
+function isOccupied(cell){
+  return cell & Occupied;
+}
+
+/// Get the id of the player that placed a block to that cell
+function getCellOccupiedPlayer(cell){
+  if(!isOccupied(cell))
+    throw "The cell must be occupied";
+  return cell & OccupiedMask;
+}
 
 class Player{
   blocks = [];
@@ -103,7 +114,7 @@ export default {
             [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), block.origin);
             if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
               continue;
-            board[xi + yi * boardSize] = Occupied0 + playerIdx;
+            board[xi + yi * boardSize] = Occupied | playerIdx;
           }
         }
         for(let y = 0; y < boardSize; y++){
@@ -188,10 +199,10 @@ export default {
           if(xj < 0 || boardSize <= xj)
             continue;
           const cell = board[xj + yj * boardSize];
-          if(Occupied0 <= cell && cell <= Occupied3){
-            if(deny[dx + 1 + (dy + 1) * 3] && cell - Occupied0 === activePlayerIdx.value)
+          if(isOccupied(cell)){
+            if(deny[dx + 1 + (dy + 1) * 3] && getCellOccupiedPlayer(cell) === activePlayerIdx.value)
               return false;
-            if(allow[dx + 1 + (dy + 1) * 3] && cell - Occupied0 === activePlayerIdx.value)
+            if(allow[dx + 1 + (dy + 1) * 3] && getCellOccupiedPlayer(cell) === activePlayerIdx.value)
               allowed++;
           }
         }
@@ -202,12 +213,12 @@ export default {
     function cellStyle(v, i) {
       return `position: absolute; left: ${
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
-          Occupied0 <= v && v <= Occupied3 ? players[v - Occupied0].color :
+          isOccupied(v) ? players[getCellOccupiedPlayer(v)].color :
           v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
     }
 
     function cellClass(v) {
-      return {ridge: Occupied0 <= v && v <= Occupied3};
+      return {ridge: isOccupied(v)};
     }
 
     onMounted(() => {
@@ -241,8 +252,7 @@ export default {
         }
         if(isPlaceable([xi, yi]))
           anyPlaceable = true;
-        const cell = board[xi + yi * boardSize];
-        if(Occupied0 <= cell && cell <= Occupied3){
+        if(isOccupied(board[xi + yi * boardSize])){
           console.log(`Cannot place there because it will be colliding to another player's block: ${xi},${yi}`);
           return false;
         }
@@ -252,7 +262,7 @@ export default {
           if(xj < 0 || boardSize <= xj || yj < 0 || boardSize <= yj)
             continue;
           const cell = board[xj + yj * boardSize];
-          if(cell - Occupied0 === activePlayerIdx.value){
+          if(isOccupied(cell) && getCellOccupiedPlayer(cell) === activePlayerIdx.value){
             console.log(`Cannot place there because it will be touching another block of yourself: ${xi},${yi} and ${xj},${yj}`);
             return false;
           }
