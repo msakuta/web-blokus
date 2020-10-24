@@ -11,6 +11,7 @@
   <div>
     <input type="button" @click="rotate" value="Rotate">
     <input type="button" @click="randomTry" value="Random try">
+    <input type="button" @click="pass" value="Pass">
   </div>
   <div class="hello">
     <div class="outerFrame">
@@ -322,13 +323,20 @@ export default {
       return false;
     }
 
+    function pass(){
+      activePlayerIdx.value = (activePlayerIdx.value + 1) % 4;
+      updateBoard();
+    }
+
     updateBoard();
 
     return {
       board,
       computedBoard,
+      rotate,
       resetGame,
       randomTry,
+      pass,
       cellStyle,
       cellClass,
       tryPlace,
@@ -336,7 +344,6 @@ export default {
       players,
       activePlayerIdx,
       activePlayer: computed(() => players[activePlayerIdx.value]),
-      rotate,
       previewPiece,
     }
   },
