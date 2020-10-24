@@ -10,6 +10,7 @@
   </div>
   <div>
     <input type="button" @click="rotate" value="Rotate">
+    <input type="button" @click="randomTry" value="Random try">
   </div>
   <div class="hello">
     <div class="outerFrame">
@@ -299,12 +300,35 @@ export default {
       }
     }
 
+    function randomTry(){
+      const player = players[activePlayerIdx.value];
+      const candidates = board.map((v, i) => [v, i]).filter((item) => item[0] & Candidate);
+      if(0 < candidates.length && 0 < player.blockOptions.length){
+        for(let tryCount = 0; tryCount < 100; tryCount++){
+          const choice = Math.floor(Math.random() * candidates.length);
+          const chosenCell = candidates[choice][1];
+          const [cx, cy] = [chosenCell % boardSize, Math.floor(chosenCell / boardSize)];
+          const pieceChoice = Math.floor(Math.random() * player.blockOptions.length);
+          const rotation = Math.floor(Math.random() * 4);
+          player.selectedBlockOption = pieceChoice;
+          const shape = player.blockOptions[pieceChoice].shape;
+          for(let cellIdx = 0; cellIdx < shape.length; cellIdx++){
+            const cellOffset = rotateCell(shape[cellIdx], rotation);
+            if(tryPlace(cx - cellOffset[0] + (cy - cellOffset[1]) * boardSize))
+              return true;
+          }
+        }
+      }
+      return false;
+    }
+
     updateBoard();
 
     return {
       board,
       computedBoard,
       resetGame,
+      randomTry,
       cellStyle,
       cellClass,
       tryPlace,
