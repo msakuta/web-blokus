@@ -1,8 +1,10 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <web-brokus/>
-  <hr>
-  Powered by <a href="https://v3.vuejs.org/">Vue.js</a>
+  <div class="appContainer">
+    <img alt="Vue logo" src="./assets/logo.png">
+    <web-brokus/>
+    <hr>
+    Powered by <a href="https://v3.vuejs.org/">Vue.js</a>
+  </div>
 </template>
 
 <script>
@@ -24,5 +26,12 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.appContainer {
+  width: 650px;
+  position: absolute;
+  left: 50%;
+  margin-left: -325px;
 }
 </style>

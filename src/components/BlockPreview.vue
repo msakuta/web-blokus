@@ -74,20 +74,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style >
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
 .outerFramePreview {
   position: relative;
   display: inline-block;
@@ -96,7 +82,7 @@ a {
   height: 30px;
   border: solid 1px red;
   padding: 1px;
-  margin: 4px;
+  margin: 2px;
   background-color: white;
 }
 .selected {

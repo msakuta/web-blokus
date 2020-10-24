@@ -3,7 +3,7 @@
     <input type="button" @click="resetGame" value="Reset Game">
   </div>
   <div v-for="(player, playerIdx) in players" :key="playerIdx" :class="{playerFrame: true, inactive: playerIdx !== activePlayerIdx}">
-    Player {{playerIdx+1}} Pieces:
+    <span style="display: inline-block">Player {{playerIdx+1}}<br> Pieces:</span>
     <BlockPreview v-for="(block, idx) in player.blockOptions" :key="idx" :block="block"
       :selected="player.selectedBlockOption === idx" :color="player.color"
       @click="previewClicked(player, idx)"/>
@@ -378,6 +378,8 @@ a {
 }
 .playerFrame {
   border: 1px solid black;
+  position: relative;
+  width: 640px;
 }
 .inactive {
   background-color: #afafaf;
