@@ -5,7 +5,8 @@
   <div v-for="(player, playerIdx) in players" :key="playerIdx" :class="{playerFrame: true, inactive: playerIdx !== activePlayerIdx}">
     <span style="display: inline-block">Player {{playerIdx+1}}<br> Pieces:</span>
     <BlockPreview v-for="(block, idx) in player.blockOptions" :key="idx" :block="block"
-      :selected="player.selectedBlockOption === idx" :color="player.color"
+      :selected="playerIdx === activePlayerIdx && player.selectedBlockOption === idx"
+      :color="player.color"
       @click="previewClicked(player, idx)"/>
   </div>
   <div>
