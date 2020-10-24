@@ -189,7 +189,7 @@ export default {
             continue;
           const cell = board[xj + yj * boardSize];
           if(Occupied0 <= cell && cell <= Occupied3){
-            if(deny[dx + 1 + (dy + 1) * 3])
+            if(deny[dx + 1 + (dy + 1) * 3] && cell - Occupied0 === activePlayerIdx.value)
               return false;
             if(allow[dx + 1 + (dy + 1) * 3] && cell - Occupied0 === activePlayerIdx.value)
               allowed++;
@@ -241,21 +241,26 @@ export default {
         }
         if(isPlaceable([xi, yi]))
           anyPlaceable = true;
+        const cell = board[xi + yi * boardSize];
+        if(Occupied0 <= cell && cell <= Occupied3){
+          console.log(`Cannot place there because it will be colliding to another player's block: ${xi},${yi}`);
+          return false;
+        }
         for(const neighbor of neighbors){
           const xj = xi + neighbor[0];
           const yj = yi + neighbor[1];
           if(xj < 0 || boardSize <= xj || yj < 0 || boardSize <= yj)
             continue;
           const cell = board[xj + yj * boardSize];
-          if(Occupied0 <= cell && cell <= Occupied3){
-            console.log(`Cannot place there because it will be touching another block: ${xi},${yi} and ${xj},${yj}`);
+          if(cell - Occupied0 === activePlayerIdx.value){
+            console.log(`Cannot place there because it will be touching another block of yourself: ${xi},${yi} and ${xj},${yj}`);
             return false;
           }
         }
       }
 
       if(!anyPlaceable){
-        console.log("Cannot place there because it will not be touching another block with a corner");
+        console.log("Cannot place there because it will not be touching another block with a corner of yours");
         return false;
       }
 
