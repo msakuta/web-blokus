@@ -26,13 +26,13 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .appContainer {
   width: 650px;
-  position: absolute;
-  left: 50%;
-  margin-left: -325px;
+  position: relative;
+  margin: auto;
 }
 </style>
