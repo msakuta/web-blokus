@@ -13,9 +13,9 @@
       @click="previewClicked(player, idx)"/>
   </div>
   <div>
-    <input type="button" @click="rotate" value="Rotate">
-    <input type="button" @click="randomTry" value="Random try">
-    <input type="button" @click="pass" value="Pass">
+    <img src="../assets/rotateIcon.png" class="buttonIcon" @click="rotate" alt="Rotate" />
+    <img src="../assets/randomIcon.png" class="buttonIcon" @click="randomTry" alt="Random try" />
+    <img src="../assets/passIcon.png" class="buttonIcon" @click="randomTry" alt="Pass" />
   </div>
   <div class="hello">
     <div class="outerFrame">
@@ -415,5 +415,11 @@ a {
   border-radius: 4px;
   width: 24px;
   height: 24px;
+}
+.buttonIcon {
+  border: outset 4px;
+  border-radius: 4px;
+  width: 48px;
+  height: 48px;
 }
 </style>
