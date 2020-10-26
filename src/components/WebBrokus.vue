@@ -14,6 +14,7 @@
   </div>
   <div>
     <img src="../assets/rotateIcon.png" class="buttonIcon" @click="rotate" alt="Rotate" />
+    <img src="../assets/flipIcon.png" class="buttonIcon" @click="flip" alt="Flip" />
     <img src="../assets/randomIcon.png" class="buttonIcon" @click="randomTry" alt="Random try" />
     <img src="../assets/passIcon.png" class="buttonIcon" @click="randomTry" alt="Pass" />
   </div>
@@ -73,9 +74,21 @@ function getCellOccupiedPlayer(cell){
   return cell & OccupiedMask;
 }
 
+class Block{
+  origin = [0, 0];
+  rotation = 0;
+  flipped = false;
+  constructor(shape, origin, rotation, flipped){
+    this.shape = shape;
+    if(origin) this.origin = origin;
+    if(rotation) this.rotation = rotation;
+    if(flipped) this.flipped = flipped;
+  }
+}
+
 class Player{
   blocks = [];
-  blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
+  blockOptions = reactive(shapes.map(shape => new Block(shape)));
   selectedBlockOption = ref(0);
   auto = false;
   constructor(color){
@@ -107,9 +120,10 @@ export default {
       for(let player of players){
         player.blocks.length = 0;
         player.blockOptions.length = 0;
-        shapes.forEach(shape => player.blockOptions.push({origin: [0, 0], rotation: 0, shape}));
+        shapes.forEach(shape => player.blockOptions.push(new Block(shape)));
         player.selectedBlockOption = 0;
       }
+      activePlayerIdx.value = 0;
       updateBoard();
     }
 
@@ -123,7 +137,7 @@ export default {
       players.forEach((player, playerIdx) => {
         for(let block of player.blocks){
           for(let [xi, yi] of block.shape){
-            [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), block.origin);
+            [xi, yi] = shiftCell(flipCell(rotateCell([xi, yi], block.rotation), block.flipped), block.origin);
             if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
               continue;
             board[xi + yi * boardSize] = Occupied | playerIdx;
@@ -156,21 +170,23 @@ export default {
       return [xi, yi];
     }
 
+    function flipCell(cell, flipped){
+      if(flipped)
+        cell = [-cell[0], cell[1]];
+      return cell;
+    }
+
     let computedBoard = computed(() => {
       let ret = [...board];
       if(preview.value){
         for(const cell of preview.value.shape){
-          const pos = shiftCell(rotateCell(cell, preview.value.rotation), preview.value.origin);
+          const pos = shiftCell(flipCell(rotateCell(cell, preview.value.rotation), preview.value.flipped), preview.value.origin);
           if(!(ret[pos[0] + pos[1] * boardSize] & OccupiedMask))
             ret[pos[0] + pos[1] * boardSize] |= Preview;
         }
       }
       return ret;
     });
-
-    // function rotateBlock(block, center=[0,0]){
-    //   return block.map(cell => [cell[1] + center[0], -cell[0] + center[1]]);
-    // }
 
     function rotate(){
       const player = players[activePlayerIdx.value];
@@ -179,12 +195,17 @@ export default {
         if(preview.value)
           preview.value.rotation = player.blockOptions[player.selectedBlockOption].rotation;
       }
-      // rotateBlock(blockOptions[player.selectedBlockOption].shape, [2,2]);
     }
 
-    // function shift(block, offset){
-    //   return block.map(cell => [cell[0] + offset[0], cell[1] + offset[1]]);
-    // }
+    function flip(){
+      const player = players[activePlayerIdx.value];
+      if(0 <= player.selectedBlockOption){
+        player.blockOptions[player.selectedBlockOption].flipped =
+          !player.blockOptions[player.selectedBlockOption].flipped;
+        if(preview.value)
+          preview.value.flipped = player.blockOptions[player.selectedBlockOption].flipped;
+      }
+    }
 
     function isPlaceable(pos){
       const allow = [1, 0, 1,
@@ -257,8 +278,8 @@ export default {
       const neighbors = [[-1,0], [0,-1], [1,0], [0,1]];
       let block = player.blockOptions[player.selectedBlockOption];
       let anyPlaceable = false;
-      for(let [xi, yi] of block.shape){
-        [xi, yi] = shiftCell(rotateCell([xi, yi], block.rotation), [x, y]);
+      for(let cell of block.shape){
+        const [xi, yi] = shiftCell(flipCell(rotateCell(cell, block.rotation), block.flipped), [x, y]);
 
         // If any of the cell consisting of the block is outside the board, it cannot be placed.
         if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi){
@@ -288,11 +309,12 @@ export default {
         return false;
       }
 
-      player.blocks.push({
-        origin: [x, y],
-        shape: player.blockOptions[player.selectedBlockOption].shape,
-        rotation: player.blockOptions[player.selectedBlockOption].rotation,
-      });
+      player.blocks.push(new Block(
+        player.blockOptions[player.selectedBlockOption].shape,
+        [x, y],
+        player.blockOptions[player.selectedBlockOption].rotation,
+        player.blockOptions[player.selectedBlockOption].flipped,
+      ));
       player.blockOptions.splice(player.selectedBlockOption, 1);
       if(player.blockOptions.length <= player.selectedBlockOption)
         player.selectedBlockOption = player.blockOptions.length - 1;
@@ -310,9 +332,11 @@ export default {
         preview.value = null;
       else{
         let [x, y] = [i % boardSize, Math.floor(i / boardSize)];
-        preview.value = {origin: [x, y], shape: player.blockOptions[player.selectedBlockOption].shape,
-          rotation: player.blockOptions[player.selectedBlockOption].rotation,
-        };
+        preview.value = new Block(player.blockOptions[player.selectedBlockOption].shape,
+          [x, y],
+          player.blockOptions[player.selectedBlockOption].rotation,
+          player.blockOptions[player.selectedBlockOption].flipped
+        );
       }
     }
 
@@ -328,10 +352,12 @@ export default {
           const rotation = Math.floor(Math.random() * 4);
           player.selectedBlockOption = pieceChoice;
           const shape = player.blockOptions[pieceChoice].shape;
-          for(let cellIdx = 0; cellIdx < shape.length; cellIdx++){
-            const cellOffset = rotateCell(shape[cellIdx], rotation);
-            if(tryPlace(cx - cellOffset[0] + (cy - cellOffset[1]) * boardSize))
-              return true;
+          for(let flipped = 0; flipped <= 1; flipped++){
+            for(let cellIdx = 0; cellIdx < shape.length; cellIdx++){
+              const cellOffset = flipCell(rotateCell(shape[cellIdx], rotation), !!flipped);
+              if(tryPlace(cx - cellOffset[0] + (cy - cellOffset[1]) * boardSize))
+                return true;
+            }
           }
         }
       }
@@ -360,6 +386,7 @@ export default {
       board,
       computedBoard,
       rotate,
+      flip,
       resetGame,
       randomTry,
       pass,

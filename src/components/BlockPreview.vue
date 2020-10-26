@@ -49,6 +49,8 @@ export default {
           case 2: [xi, yi] = [boardSize - xi - 1, boardSize - yi - 1]; break;
           case 3: [xi, yi] = [boardSize - yi - 1, xi]; break;
         }
+        if(props.block.flipped)
+          xi = boardSize - xi - 1;
         if(xi < 0 || boardSize <= xi || yi < 0 || boardSize <= yi)
           continue;
         board[xi + yi * boardSize] = Occupied;
