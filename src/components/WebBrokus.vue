@@ -156,8 +156,8 @@ export default {
       if(preview.value){
         for(const cell of preview.value.shape){
           const pos = shiftCell(rotateCell(cell, preview.value.rotation), preview.value.origin);
-          if(ret[pos[0] + pos[1] * boardSize] === Empty)
-            ret[pos[0] + pos[1] * boardSize] = Preview;
+          if(!(ret[pos[0] + pos[1] * boardSize] & OccupiedMask))
+            ret[pos[0] + pos[1] * boardSize] |= Preview;
         }
       }
       return ret;
@@ -221,7 +221,9 @@ export default {
       return `position: absolute; left: ${
           i % 20 * 32}px; top: ${Math.floor(i / 20) * 32}px; background-color:${
           isOccupied(v) ? players[getCellOccupiedPlayer(v)].color :
-          v === Candidate ? "#7f7fff" : v === Preview ? "#7fff7f" : "white"}`;
+          `rgb(${!!(v & Preview) ^ !!(v & Candidate) ? 191 : 255}, ${
+            v & Candidate ? 191 : 255}, ${
+            v & Preview ? 191 : 255})`}`;
     }
 
     function cellClass(v) {
