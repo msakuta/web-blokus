@@ -3,7 +3,10 @@
     <input type="button" @click="resetGame" value="Reset Game">
   </div>
   <div v-for="(player, playerIdx) in players" :key="playerIdx" :class="{playerFrame: true, inactive: playerIdx !== activePlayerIdx}">
-    <span style="display: inline-block">Player {{playerIdx+1}}<br> Pieces:</span>
+    <span style="display: inline-block">Player {{playerIdx+1}}<br>
+      <label><input type="checkbox" v-model="player.auto">Auto</label><br>
+      Pieces:
+    </span>
     <BlockPreview v-for="(block, idx) in player.blockOptions" :key="idx" :block="block"
       :selected="playerIdx === activePlayerIdx && player.selectedBlockOption === idx"
       :color="player.color"
@@ -69,6 +72,7 @@ class Player{
   blocks = [];
   blockOptions = reactive(shapes.map(shape => ({origin: [0, 0], rotation: 0, shape})));
   selectedBlockOption = ref(0);
+  auto = false;
   constructor(color){
     this.color = color;
   }
@@ -287,6 +291,9 @@ export default {
         player.selectedBlockOption = player.blockOptions.length - 1;
       activePlayerIdx.value = (activePlayerIdx.value + 1) % 4;
       updateBoard();
+      if(players[activePlayerIdx.value].auto){
+        playerDone();
+      }
       return true;
     }
 
@@ -327,6 +334,17 @@ export default {
     function pass(){
       activePlayerIdx.value = (activePlayerIdx.value + 1) % 4;
       updateBoard();
+      playerDone();
+    }
+
+    function playerDone(){
+      if(players[activePlayerIdx.value].auto){
+        (async function(){
+          if(!randomTry()){
+            pass();
+          }
+        })();
+      }
     }
 
     updateBoard();
