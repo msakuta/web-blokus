@@ -23,6 +23,7 @@
       <div v-for="(v, i) in computedBoard" :key="i">
         <div :class="{cell: true, ...cellClass(v, i)}" :style="cellStyle(v, i)" @click="tryPlace(i)"
           @mouseenter="previewPiece(i)">
+          <div v-if="v & Preview" class="cellInternalFrame" ></div>
         </div>
       </div>
     </div>
@@ -383,6 +384,7 @@ export default {
     updateBoard();
 
     return {
+      Preview,
       board,
       computedBoard,
       rotate,
@@ -453,5 +455,13 @@ a {
   border-radius: 4px;
   width: 48px;
   height: 48px;
+}
+.cellInternalFrame {
+  border: solid 1px red;
+  position: relative;
+  left: 2px;
+  top: 2px;
+  width: 24px;
+  height: 24px;
 }
 </style>
