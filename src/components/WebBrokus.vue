@@ -20,12 +20,17 @@
   </div>
   <div class="hello">
     <div class="outerFrame">
-      <div v-for="(v, i) in computedBoard" :key="i">
+      <div v-for="(v, i) in board" :key="i">
         <div :class="{cell: true, ...cellClass(v, i)}" :style="cellStyle(v, i)" @click="tryPlace(i)"
           @mouseenter="previewPiece(i)">
-          <div v-if="v & Preview" class="cellInternalFrame" ></div>
         </div>
       </div>
+      <template v-if="preview !== null">
+        <div v-for="(v, i) in preview.shape"
+          :key="i"
+          class="cellInternalFrame"
+          :style="previewBlockCellStyle(v)"></div>
+      </template>
     </div>
   </div>
 </template>
@@ -176,18 +181,6 @@ export default {
         cell = [-cell[0], cell[1]];
       return cell;
     }
-
-    let computedBoard = computed(() => {
-      let ret = [...board];
-      if(preview.value){
-        for(const cell of preview.value.shape){
-          const pos = shiftCell(flipCell(rotateCell(cell, preview.value.rotation), preview.value.flipped), preview.value.origin);
-          if(!(ret[pos[0] + pos[1] * boardSize] & OccupiedMask))
-            ret[pos[0] + pos[1] * boardSize] |= Preview;
-        }
-      }
-      return ret;
-    });
 
     function rotate(){
       const player = players[activePlayerIdx.value];
@@ -341,6 +334,15 @@ export default {
       }
     }
 
+    function previewBlockCellStyle(cell){
+      const block = preview.value;
+      const xy = shiftCell(flipCell(rotateCell(cell, block.rotation), block.flipped), block.origin);
+      return {
+        left: `${xy[0] * 32 + 6}px`,
+        top: `${xy[1] * 32 + 6}px`,
+      }
+    }
+
     function randomTry(){
       const player = players[activePlayerIdx.value];
       const candidates = board.map((v, i) => [v, i]).filter((item) => item[0] & Candidate);
@@ -386,7 +388,6 @@ export default {
     return {
       Preview,
       board,
-      computedBoard,
       rotate,
       flip,
       resetGame,
@@ -400,6 +401,8 @@ export default {
       activePlayerIdx,
       activePlayer: computed(() => players[activePlayerIdx.value]),
       previewPiece,
+      previewBlockCellStyle,
+      preview,
     }
   },
 }
@@ -457,11 +460,12 @@ a {
   height: 48px;
 }
 .cellInternalFrame {
-  border: solid 1px red;
-  position: relative;
+  border: solid 2px #ff00ff;
+  position: absolute;
   left: 2px;
   top: 2px;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
 }
 </style>
