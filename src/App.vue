@@ -1,7 +1,7 @@
 <template>
   <div class="appContainer">
     <h1>Web-blokus</h1>
-    <web-brokus/>
+    <web-blokus/>
     <hr>
     Powered by <a href="https://v3.vuejs.org/">Vue.js</a><br>
     Source on <a href="https://github.com/msakuta/web-blokus">GitHub</a>.
@@ -9,12 +9,12 @@
 </template>
 
 <script>
-import WebBrokus from './components/WebBrokus.vue'
+import WebBlokus from './components/WebBlokus.vue'
 
 export default {
   name: 'App',
   components: {
-    WebBrokus
+    WebBlokus
   }
 }
 </script>

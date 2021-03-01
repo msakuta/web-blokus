@@ -1,4 +1,4 @@
-# web-brokus
+# web-blokus
 
 Try it now on your browser! https://msakuta.github.io/web-blokus/
 

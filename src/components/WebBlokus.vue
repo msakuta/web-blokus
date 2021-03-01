@@ -103,7 +103,7 @@ class Player{
 }
 
 export default {
-  name: 'WebBrokus',
+  name: 'WebBlokus',
   components: { BlockPreview },
 
   setup(){
